@@ -3,22 +3,12 @@ package core;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import utils.DriverInterations;
 
-public class DriverFactory {
+public class DriverManager extends DriverInterations {
     private static WebDriver driver;
 
-    private DriverFactory() {}
-    
-    public static void getUrl(String url) {
-        if (url == null || url.trim().isEmpty()) {
-            throw new IllegalArgumentException("A URL não pode ser nula ou vazia.");
-        }
-        getDriver().get(url);
-    }
-    
-    public static boolean isEqualToCurrentUrl(String url) {
-		return getDriver().getCurrentUrl().equals(url);
-	}
+    private DriverManager() {}
 
     public static WebDriver getDriver() {
         if (driver == null) {
@@ -38,10 +28,5 @@ public class DriverFactory {
             driver.quit();
             driver = null;
         }
-    }
-    
-    public static void resetDriver() {
-        killDriver();
-        getDriver();
     }
 }

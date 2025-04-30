@@ -1,10 +1,12 @@
 package utils;
 
 import org.openqa.selenium.Cookie;
+import org.openqa.selenium.WebDriver;
+
 import java.io.*;
 import java.util.Set;
 
-import core.DriverFactory;
+import core.DriverManager;
 
 public class CookieManager {
 	
@@ -13,7 +15,7 @@ public class CookieManager {
             FileOutputStream fileOut = new FileOutputStream("cookies.ser");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             
-            Set<org.openqa.selenium.Cookie> cookies = DriverFactory.getDriver().manage().getCookies();
+            Set<org.openqa.selenium.Cookie> cookies = DriverManager.getDriver().manage().getCookies();
             
             out.writeObject(cookies);
             
@@ -26,22 +28,30 @@ public class CookieManager {
     }
 
     public static void carregarCookies() {
-        try {
-            FileInputStream fileIn = new FileInputStream("cookies.ser");
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            
+        WebDriver driver = DriverManager.getDriver();
+
+        File file = new File("cookies.ser");
+
+        if (!file.exists() || file.length() == 0) {
+            System.out.println("Arquivo de cookies não existe ou está vazio.");
+            return;
+        }
+
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
             @SuppressWarnings("unchecked")
             Set<Cookie> cookies = (Set<Cookie>) in.readObject();
-            
             for (Cookie cookie : cookies) {
-                DriverFactory.getDriver().manage().addCookie((org.openqa.selenium.Cookie) cookie);
+                driver.manage().addCookie(cookie);
             }
-            
-            in.close();
-            fileIn.close();
-            System.out.println("Cookies carregados.");
+            System.out.println("Cookies carregados com sucesso.");
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+    
+    public static boolean validarCookies(String urlProtegida) {
+    	CookieManager.carregarCookies();
+		DriverManager.getDriver().get(urlProtegida);
+		return DriverManager.getDriver().getCurrentUrl().equals(urlProtegida);
     }
 }

@@ -1,13 +1,9 @@
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.openqa.selenium.By;
-
-import components.RequestFilter;
-import core.DriverFactory;
-import pages.FiltersPage;
-import pages.LoginPage;
-import pages.Requisicao;
+import client.LoginClient;
+import client.RequisicaoClient;
+import core.DriverManager;
 import utils.CookieManager;
 import utils.Urls;
 
@@ -21,48 +17,30 @@ public class App {
 	            throw new RuntimeException("Variáveis de ambiente não encontradas.");
 	        }
 	        
-	        DriverFactory.getUrl(Urls.SIPAC_HOME);
-	        logIn(user, password);
+	        DriverManager.getDriver().get(Urls.REQUESTS_FILTERS_PAGE);
 	        
-	        
-	        
-	        if (!DriverFactory.isEqualToCurrentUrl(Urls.REQUESTS_FILTERS_PAGE)) {
-	        	DriverFactory.getUrl(Urls.REQUESTS_FILTERS_PAGE);
+	        LoginClient loginClient = new LoginClient();
+	        if (!CookieManager.validarCookies(Urls.REQUESTS_FILTERS_PAGE)) {
+	        	loginClient.fazerLogin(user, password);
+	        	Thread.sleep(5000);
+	        	CookieManager.salvarCookies();
 	        }
 	        
-	        String respostaHtml = Requisicao.buscarResultados();
-            
+	        String respostaHtml = RequisicaoClient.buscarResultados();
+	        
             Pattern pattern = Pattern.compile("visualizaRequisicao\\.do\\?id=(\\d+)");
             Matcher matcher = pattern.matcher(respostaHtml);
-
+            
             while (matcher.find()) {
-                String id = matcher.group(1); // grupo 1 é o número capturado
+                String id = matcher.group(1);
                 System.out.println("ID encontrado: " + id);
             }
-	        
-//	        FiltersPage filtersPage = new FiltersPage();
-//	        RequestFilter yearFilter = new RequestFilter(By.xpath("//*[@id=\"buscaNumAno\"]"), true);
-//	        filtersPage.selectFilters(yearFilter);
-//	        filtersPage.searchResults();
-	        
-	        Thread.sleep(50000);
 	        
 	    } catch (Exception e) {
 	        System.err.println("Erro durante a execução: " + e.getMessage());
 	        e.printStackTrace();
 	    } finally {
-	        DriverFactory.killDriver();
+	        DriverManager.killDriver();
 	    }
-	}
-	
-	public static void logIn(String usuario, String senha) {
-		CookieManager.carregarCookies();
-		DriverFactory.getUrl(Urls.REQUESTS_FILTERS_PAGE);
-        
-        if (!DriverFactory.isEqualToCurrentUrl(Urls.REQUESTS_FILTERS_PAGE)) {
-            LoginPage loginPage = new LoginPage();
-            loginPage.fazerLogin(usuario, senha);
-            CookieManager.salvarCookies();
-        }
 	}
 }
